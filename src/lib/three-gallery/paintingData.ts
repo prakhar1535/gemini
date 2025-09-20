@@ -61,7 +61,7 @@ export const defaultPaintingData: PaintingData[] = [
     info: {
       title: `Van Gogh ${i + 9}`,
       artist: "Vincent van Gogh",
-      description: `With its striking use of color and brushwork, Artwork ${
+      description: `With its striking use of color and brush, Artwork ${
         i + 9
       } is a testament to Van Gogh's artistic genius.`,
       year: `Year ${i + 9}`,
@@ -166,5 +166,3 @@ export function generatePaintingDataFromImages(
     };
   });
 }
-
-
