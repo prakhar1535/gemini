@@ -69,11 +69,11 @@ const navigation = [
 ];
 
 const marketplaceNavigation = [
-  {
-    name: "Browse Products",
-    href: "/marketplace",
-    icon: Store,
-  },
+  // {
+  //   name: "Browse Products",
+  //   href: "/marketplace",
+  //   icon: Store,
+  // },
   {
     name: "Shopping Cart",
     href: "/cart",
@@ -185,7 +185,7 @@ export function Sidebar() {
 
         <Separator className="my-4" />
 
-        <div className="space-y-1">
+        {/* <div className="space-y-1">
           <h3 className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
             AI Tools
           </h3>
@@ -208,7 +208,7 @@ export function Sidebar() {
               </Button>
             );
           })}
-        </div>
+        </div> */}
       </nav>
 
       {/* User Profile */}

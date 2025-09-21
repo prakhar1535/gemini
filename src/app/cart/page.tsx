@@ -328,7 +328,7 @@ export default function CartPage() {
                       <div className="flex items-center justify-between">
                         <span className="font-medium">Standard Shipping</span>
                         <span className="text-sm">
-                          {calculateSubtotal() >= 100 ? "FREE" : "$9.99"}
+                          {getCartTotal() >= 100 ? "FREE" : "$9.99"}
                         </span>
                       </div>
                       <p className="text-xs text-muted-foreground">3-5 business days</p>
