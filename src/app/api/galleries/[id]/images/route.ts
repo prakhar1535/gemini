@@ -1,18 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/firebaseAdmin";
-import { GalleryImage } from "@/lib/types/gallery";
+import { COLLECTIONS, GalleryImage } from "@/lib/types/gallery";
 
 interface RouteParams {
-  params: {
-    id: string;
-  };
+  params: { id: string };
 }
 
-// GET /api/galleries/[id]/images - Get all images for a specific gallery
+// GET /api/galleries/[id]/images - List images in a gallery
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params;
-
     if (!id) {
       return NextResponse.json(
         { error: "Gallery ID is required" },
@@ -20,22 +17,17 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    // Get all images from the gallery's subcollection
     const imagesSnapshot = await db
-      .collection("galleries")
+      .collection(COLLECTIONS.GALLERIES)
       .doc(id)
       .collection("images")
       .orderBy("order", "asc")
       .get();
 
-    const images: GalleryImage[] = [];
-
-    imagesSnapshot.forEach((doc) => {
-      images.push({
-        id: doc.id,
-        ...doc.data(),
-      } as GalleryImage);
-    });
+    const images: GalleryImage[] = imagesSnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    } as GalleryImage));
 
     return NextResponse.json({
       success: true,

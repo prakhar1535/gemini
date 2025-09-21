@@ -206,6 +206,62 @@ Please respond in the following JSON format:
       };
     }
   }
+
+  // Analyze an image to extract visible text (OCR) and generate an Indian-culture storytelling context
+  async generateIndianCraftStoryFromImage(
+    imageBase64: string,
+    options?: { regionHint?: string; craftTypeHint?: string }
+  ): Promise<{
+    title: string;
+    artist: string;
+    description: string;
+    year: string;
+    keywords: string[];
+    region?: string;
+    craftType?: string;
+  }> {
+    const prompt = `You are an expert Indian art historian and curator. Analyze the provided image (inline). First perform OCR to extract any visible text (shop names, signage, labels). Then, based on the visual cues and OCR, write a culturally rooted story that helps a visitor understand the traditional significance of the craft or subject in the image.\n\nInstructions:\n- Identify likely Indian region/state and community where this craft/theme is rooted\n- Identify materials, techniques, motifs, and any religious/seasonal/festival associations\n- Explain symbolism and heritage value in a way that effectively tells the story of their craft to lay visitors\n- Keep the tone warm, respectful, and insightful; avoid making up specific personal names unless present in OCR\n- Prefer terms used in India (e.g., ghungroo, kantha, madhubani, kolam, ajrakh, bandhani, warli, pattachitra, dokra, ittar, block printing, chikankari, kathakali, kalamkari, terracotta, brassware, bidri, etc.) where relevant\n\nReturn ONLY valid JSON with the following shape:\n{\n  \"title\": \"short evocative title rooted in Indian tradition\",\n  \"artist\": \"Unknown artisan\" | \"Workshop/Collective\" | text derived from OCR if available,\n  \"description\": \"2-3 short paragraphs telling the story and traditional significance\",\n  \"year\": \"YYYY\" (best guess; otherwise current year),\n  \"keywords\": [\"max 6 tags like region, craft, motif\"],\n  \"region\": \"state/region guess if applicable\",\n  \"craftType\": \"craft or art form guess if applicable\"\n}`;
+
+    try {
+      const result = await this.model.generateContent([
+        prompt,
+        {
+          inlineData: {
+            data: imageBase64,
+            mimeType: "image/jpeg",
+          },
+        },
+      ]);
+
+      const response = await result.response;
+      const text = response.text();
+
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        throw new Error("Model did not return JSON");
+      }
+      const parsed = JSON.parse(jsonMatch[0]);
+      return {
+        title: parsed.title || "Artwork",
+        artist: parsed.artist || "Unknown artisan",
+        description: parsed.description || "",
+        year: parsed.year || new Date().getFullYear().toString(),
+        keywords: parsed.keywords || [],
+        region: parsed.region,
+        craftType: parsed.craftType,
+      };
+    } catch (error) {
+      console.error("Error generating Indian craft story from image:", error);
+      return {
+        title: "Artwork",
+        artist: "Unknown artisan",
+        description:
+          "A crafted piece reflecting the depth of Indian tradition and everyday aesthetics.",
+        year: new Date().getFullYear().toString(),
+        keywords: [],
+      };
+    }
+  }
 }
 
 export const geminiService = new GeminiService();

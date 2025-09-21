@@ -152,6 +152,37 @@ export default function ThreeGallery({
       controls.moveRight(-movementState.velocity.x * delta);
       controls.moveForward(-movementState.velocity.z * delta);
 
+      // Check proximity to paintings for story display
+      const now = Date.now();
+      if (now - lastProximityCheck > 500) { // Check every 500ms
+        lastProximityCheck = now;
+        
+        const cameraPosition = camera.position;
+        let closestPainting = null;
+        let closestDistance = Infinity;
+
+        // Check distance to each painting
+        paintings.forEach((painting: any) => {
+          if (painting.userData && painting.userData.info) {
+            const distance = cameraPosition.distanceTo(painting.position);
+            if (distance < closestDistance && distance < 5) { // 5 units proximity threshold
+              closestDistance = distance;
+              closestPainting = painting;
+            }
+          }
+        });
+
+        // Show info for closest painting if we're close enough
+        if (closestPainting && closestPainting.userData.info !== currentPaintingInfo) {
+          currentPaintingInfo = closestPainting.userData.info;
+          showPaintingInfo(currentPaintingInfo);
+        } else if (!closestPainting && currentPaintingInfo) {
+          // Hide info if we moved away from all paintings
+          currentPaintingInfo = null;
+          hidePaintingInfo();
+        }
+      }
+
       renderer.render(scene, camera);
     };
     animate();
@@ -217,6 +248,9 @@ export default function ThreeGallery({
             <b>Click:</b> Lock pointer & start moving
           </p>
           <p>
+            <b>Get Close:</b> View AI story
+          </p>
+          <p>
             <b>ESC:</b> Unlock pointer
           </p>
         </div>
@@ -225,11 +259,11 @@ export default function ThreeGallery({
       {/* Painting Info Panel */}
       <div
         id="painting-info"
-        className="absolute top-4 left-4 bg-black/80 text-white p-4 rounded-lg max-w-sm opacity-0 transition-all duration-300 transform translate-y-4"
+        className="absolute top-20 left-4 bg-black/90 text-white p-6 rounded-xl max-w-md opacity-0 transition-all duration-300 transform translate-y-4 shadow-2xl border border-white/10"
       >
-        <h3 id="painting-title" className="text-xl font-bold mb-2"></h3>
-        <p id="painting-artist" className="text-sm text-gray-300 mb-2"></p>
-        <p id="painting-description" className="text-sm"></p>
+        <h3 id="painting-title" className="text-2xl font-bold mb-3 text-white"></h3>
+        <p id="painting-artist" className="text-sm text-blue-200 mb-3 font-medium"></p>
+        <p id="painting-description" className="text-sm leading-relaxed text-gray-100"></p>
       </div>
     </div>
   );
@@ -677,25 +711,11 @@ function setupEventListeners(
   paintings: THREE.Group[],
   movementState: any
 ): (() => void) | undefined {
-  const raycaster = new THREE.Raycaster();
-  const mouse = new THREE.Vector2();
-
-  // Click handling for paintings
-  function onMouseClick(event: MouseEvent) {
+  // Click handling for camera lock
+  function onMouseClick() {
     if (!controls.isLocked) {
       controls.lock();
       return;
-    }
-
-    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
-    raycaster.setFromCamera(mouse, camera);
-    const intersects = raycaster.intersectObjects(paintings);
-
-    if (intersects.length > 0) {
-      const painting = intersects[0].object as THREE.Mesh;
-      showPaintingInfo(painting.userData.info);
     }
   }
 
@@ -750,24 +770,49 @@ function setupEventListeners(
   };
 }
 
+// Global variable to track current painting info
+let currentPaintingInfo: any = null;
+let lastProximityCheck = 0;
+
+function hidePaintingInfo(): void {
+  const infoPanel = document.getElementById("painting-info");
+  if (infoPanel) {
+    infoPanel.style.opacity = "0";
+    infoPanel.style.transform = "translateY(1rem)";
+  }
+}
+
 function showPaintingInfo(info: any): void {
+  console.log("showPaintingInfo called with:", info);
+  
+  if (!info || typeof info !== 'object') {
+    console.log("Invalid info object:", info);
+    return;
+  }
+  
   const titleElement = document.getElementById("painting-title");
   const artistElement = document.getElementById("painting-artist");
   const descriptionElement = document.getElementById("painting-description");
   const infoPanel = document.getElementById("painting-info");
 
+  console.log("Elements found:", { titleElement, artistElement, descriptionElement, infoPanel });
+
   if (titleElement && artistElement && descriptionElement && infoPanel) {
-    titleElement.textContent = info.title;
-    artistElement.textContent = info.artist;
-    descriptionElement.textContent = info.description;
+    titleElement.textContent = info.title || "Untitled";
+    artistElement.textContent = info.artist || "Unknown Artist";
+    descriptionElement.textContent = info.description || "No description available";
 
     infoPanel.style.opacity = "1";
     infoPanel.style.transform = "translateY(0)";
 
-    // Hide after 5 seconds
+    console.log("Painting info displayed:", { title: info.title, artist: info.artist });
+
+    // Hide after 8 seconds
     setTimeout(() => {
       infoPanel.style.opacity = "0";
       infoPanel.style.transform = "translateY(1rem)";
-    }, 5000);
+    }, 8000);
+  } else {
+    console.log("Could not find required DOM elements");
   }
 }

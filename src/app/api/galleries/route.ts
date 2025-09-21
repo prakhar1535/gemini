@@ -8,6 +8,7 @@ import {
   COLLECTIONS,
 } from "@/lib/types/gallery";
 import { generatePaintingDataFromImages } from "@/lib/three-gallery/paintingData";
+import { geminiService } from "@/lib/gemini";
 
 // GET /api/galleries - Get all galleries or filter by user
 export async function GET(request: NextRequest) {
@@ -21,15 +22,15 @@ export async function GET(request: NextRequest) {
 
     // Apply filters
     if (userId) {
-      query = query.where("metadata.createdBy", "==", userId);
+      query = query.where("metadata.createdBy", "==", userId) as any;
     }
 
     if (isPublic === "true") {
-      query = query.where("metadata.isPublic", "==", true);
+      query = query.where("metadata.isPublic", "==", true) as any;
     }
 
     // Order by creation date (newest first)
-    query = query.orderBy("metadata.createdAt", "desc").limit(limit);
+    query = query.orderBy("metadata.createdAt", "desc").limit(limit) as any;
 
     const snapshot = await query.get();
     const galleries: Gallery[] = [];
@@ -100,9 +101,50 @@ export async function POST(request: NextRequest) {
     const uploadResult = await uploadResponse.json();
     const uploadedImages = uploadResult.uploadedImages;
 
-    // Generate painting data from uploaded images (using image IDs)
+    // Generate painting data from uploaded images with AI storytelling
     const imageIds = uploadedImages.map((img: any) => img.id);
-    const paintingData = generatePaintingDataFromImages(imageIds, galleryId);
+    let paintingData = generatePaintingDataFromImages(imageIds);
+
+    // For each image, ask Gemini to create an Indian-culture story (OCR + context)
+    // Use base64 data from uploaded images response
+    try {
+      const stories = await Promise.all(
+        uploadedImages.map(async (img: any) => {
+          const base64 = img.base64?.startsWith("data:")
+            ? img.base64.replace(/^data:[^,]+,/, "")
+            : img.base64;
+          return await geminiService.generateIndianCraftStoryFromImage(base64);
+        })
+      );
+
+      // Attach stories to paintingData.info
+      paintingData = paintingData.map((pd, idx) => {
+        const imageId = pd.imageId;
+        const imgIndex = uploadedImages.findIndex((img: any) => img.id === imageId);
+        const story = stories[imgIndex];
+        if (story) {
+          return {
+            ...pd,
+            info: {
+              title: story.title,
+              artist: story.artist,
+              description: story.description,
+              year: story.year,
+              link: pd.info.link || "", // Ensure link is never undefined
+            },
+          };
+        }
+        return {
+          ...pd,
+          info: {
+            ...pd.info,
+            link: pd.info.link || "", // Ensure link is never undefined
+          },
+        };
+      });
+    } catch (e) {
+      console.warn("AI storytelling generation failed; proceeding with defaults.", e);
+    }
 
     // Create gallery document
     const gallery: Omit<Gallery, "id"> = {
@@ -127,7 +169,7 @@ export async function POST(request: NextRequest) {
     };
 
     // Save to Firestore
-    const docRef = await db
+      const docRef = await db
       .collection(COLLECTIONS.GALLERIES)
       .doc(galleryId)
       .set(gallery);
@@ -235,7 +277,7 @@ export async function DELETE(request: NextRequest) {
     const gallery = galleryDoc.data() as Gallery;
 
     // Delete all associated images from Firestore
-    for (const image of gallery.images) {
+    for (const image of gallery.images || []) {
       try {
         const deleteResponse = await fetch(
           `${request.nextUrl.origin}/api/galleries/upload-images`,

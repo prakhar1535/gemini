@@ -3,7 +3,7 @@ import Link from "next/link";
 import { headers } from "next/headers";
 import ThreeGallery from "@/lib/three-gallery/ThreeGallery";
 import { defaultPaintingData } from "@/lib/three-gallery/paintingData";
-import { Gallery } from "@/lib/types/gallery";
+import { Gallery, GalleryPaintingData, GalleryImage } from "@/lib/types/gallery";
 
 interface GalleryPageProps {
   params: {
@@ -68,6 +68,7 @@ async function getGalleryData(
       paintingData: defaultPaintingData.map((painting, index) => ({
         ...painting,
         imageId: `demo-${index + 1}`,
+        position: painting.position || { x: 0, y: 2, z: -19.5 }, // Ensure position is always defined
       })),
       settings: {
         backgroundColor: "#000000",
@@ -119,9 +120,9 @@ async function getGalleryData(
 
         // Update paintingData with actual image sources
         if (gallery.paintingData && gallery.images) {
-          gallery.paintingData = gallery.paintingData.map((painting, index) => {
-            const image = gallery.images.find(
-              (img) => img.id === painting.imageId
+          gallery.paintingData = gallery.paintingData.map((painting: GalleryPaintingData) => {
+            const image = gallery.images?.find(
+              (img: GalleryImage) => img.id === painting.imageId
             );
             return {
               ...painting,
@@ -170,8 +171,8 @@ export default async function GalleryPage({ params }: GalleryPageProps) {
               </p>
               <div className="flex items-center space-x-4 mt-2">
                 <span className="text-sm text-gray-400">
-                  {galleryData.images.length} artwork
-                  {galleryData.images.length !== 1 ? "s" : ""}
+                  {galleryData.images?.length || 0} artwork
+                  {(galleryData.images?.length || 0) !== 1 ? "s" : ""}
                 </span>
                 <span className="text-sm text-gray-400">
                   {galleryData.metadata.viewCount} view
