@@ -11,11 +11,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Bell, Search, Menu, Sun, Moon } from "lucide-react";
+import { Bell, Search, Menu, Sun, Moon, ShoppingCart } from "lucide-react";
 import { useState } from "react";
+import Link from "next/link";
+import { useCart } from "@/lib/cart";
 
 export function Header() {
   const [isDark, setIsDark] = useState(false);
+  const { getCartItemsCount } = useCart();
 
   const toggleTheme = () => {
     setIsDark(!isDark);
@@ -49,6 +52,18 @@ export function Header() {
           className="h-9 w-9"
         >
           {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+        </Button>
+
+        {/* Cart */}
+        <Button variant="ghost" size="icon" className="relative" asChild>
+          <Link href="/cart">
+            <ShoppingCart className="h-4 w-4" />
+            {getCartItemsCount() > 0 && (
+              <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-primary text-[10px] text-primary-foreground flex items-center justify-center">
+                {getCartItemsCount()}
+              </span>
+            )}
+          </Link>
         </Button>
 
         {/* Notifications */}

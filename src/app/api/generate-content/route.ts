@@ -17,10 +17,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Handle legacy format where data might be directly in body
+    const requestData = data || body;
+
     const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
 
     if (type === "image") {
-      const { base64, platform, additionalPrompt } = data;
+      const { base64, platform, additionalPrompt } = requestData;
 
       const prompt = `
 You are an expert social media content creator. Analyze this image carefully and generate engaging content for ${platform.toUpperCase()}.
@@ -95,7 +98,7 @@ Please respond in the following JSON format:
         includeHashtags,
         includeCallToAction,
         imageDescription,
-      } = data;
+      } = requestData;
 
       const prompt = `
 Generate engaging social media content for ${platform.toUpperCase()} with the following specifications:
@@ -144,18 +147,33 @@ Please respond in the following JSON format:
       const response = await result.response;
       const text = response.text();
 
-      // Parse the JSON response
-      const jsonMatch = text.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        const parsed = JSON.parse(jsonMatch[0]);
-        return NextResponse.json({
-          content: parsed.content || "",
-          hashtags: parsed.hashtags || [],
-          callToAction: parsed.callToAction || "",
-          suggestions: parsed.suggestions || [],
-        });
+      // Try to parse JSON response first
+      try {
+        // Remove markdown code blocks if present
+        let cleanText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+        
+        const jsonMatch = cleanText.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          const parsed = JSON.parse(jsonMatch[0]);
+          
+          // Handle multi-platform response
+          if (parsed['X/Twitter'] || parsed['LinkedIn'] || parsed['Instagram']) {
+            return NextResponse.json(parsed);
+          }
+          
+          // Handle single content response
+          return NextResponse.json({
+            content: parsed.content || cleanText,
+            hashtags: parsed.hashtags || [],
+            callToAction: parsed.callToAction || "",
+            suggestions: parsed.suggestions || [],
+          });
+        }
+      } catch (parseError) {
+        console.log("JSON parsing failed, using raw text:", parseError);
       }
 
+      // Fallback: return the raw text as content
       return NextResponse.json({
         content: text,
         hashtags: [],

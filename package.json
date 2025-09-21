@@ -44,6 +44,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
+    "firebase-admin": "^13.5.0",
     "grammy": "^1.38.2",
     "lucide-react": "^0.544.0",
     "multer": "^2.0.2",

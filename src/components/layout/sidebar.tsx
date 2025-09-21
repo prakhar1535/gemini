@@ -15,9 +15,15 @@ import {
   Users,
   Zap,
   Images,
+  ShoppingCart,
+  Store,
+  Package,
+  UserCheck,
+  LogOut,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useAuth } from "@/lib/auth";
 
 const navigation = [
   {
@@ -26,9 +32,19 @@ const navigation = [
     icon: Home,
   },
   {
+    name: "Marketplace",
+    href: "/marketplace",
+    icon: Store,
+  },
+  {
     name: "Create Content",
     href: "/create",
     icon: PenTool,
+  },
+  {
+    name: "Content Studio",
+    href: "/content-studio",
+    icon: Camera,
   },
   {
     name: "Schedule Posts",
@@ -49,6 +65,29 @@ const navigation = [
     name: "Settings",
     href: "/settings",
     icon: Settings,
+  },
+];
+
+const marketplaceNavigation = [
+  {
+    name: "Browse Products",
+    href: "/marketplace",
+    icon: Store,
+  },
+  {
+    name: "Shopping Cart",
+    href: "/cart",
+    icon: ShoppingCart,
+  },
+  {
+    name: "My Orders",
+    href: "/orders",
+    icon: Package,
+  },
+  {
+    name: "Admin Dashboard",
+    href: "/admin",
+    icon: UserCheck,
   },
 ];
 
@@ -77,6 +116,7 @@ const tools = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { user, logout } = useAuth();
 
   return (
     <div className="flex h-full w-64 flex-col bg-card border-r border-border">
@@ -96,6 +136,33 @@ export function Sidebar() {
       <nav className="flex-1 space-y-1 p-4">
         <div className="space-y-1">
           {navigation.map((item) => {
+            const isActive = pathname === item.href;
+            return (
+              <Button
+                key={item.name}
+                variant={isActive ? "secondary" : "ghost"}
+                className={cn(
+                  "w-full justify-start",
+                  isActive && "bg-accent text-accent-foreground"
+                )}
+                asChild
+              >
+                <Link href={item.href}>
+                  <item.icon className="mr-3 h-4 w-4" />
+                  {item.name}
+                </Link>
+              </Button>
+            );
+          })}
+        </div>
+
+        <Separator className="my-4" />
+
+        <div className="space-y-1">
+          <h3 className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            Marketplace
+          </h3>
+          {marketplaceNavigation.map((item) => {
             const isActive = pathname === item.href;
             return (
               <Button
@@ -145,22 +212,35 @@ export function Sidebar() {
       </nav>
 
       {/* User Profile */}
-      <div className="p-4 border-t border-border">
+      <div className="p-4 border-t border-border space-y-3">
         <div className="flex items-center space-x-3">
           <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center">
             <span className="text-sm font-medium text-primary-foreground">
-              U
+              {user?.name?.charAt(0).toUpperCase() || "U"}
             </span>
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-foreground truncate">
-              User Name
+              {user?.name || "User Name"}
             </p>
             <p className="text-xs text-muted-foreground truncate">
-              user@example.com
+              {user?.email || "user@example.com"}
+            </p>
+            <p className="text-xs text-primary capitalize">
+              {user?.role || "customer"}
             </p>
           </div>
         </div>
+        
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={logout}
+          className="w-full justify-start"
+        >
+          <LogOut className="h-4 w-4 mr-2" />
+          Sign Out
+        </Button>
       </div>
     </div>
   );
