@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { headers } from "next/headers";
 import ThreeGallery from "@/lib/three-gallery/ThreeGallery";
 import { defaultPaintingData } from "@/lib/three-gallery/paintingData";
 import { Gallery } from "@/lib/types/gallery";
@@ -11,7 +12,7 @@ interface GalleryPageProps {
 }
 
 // Function to get gallery data from Firestore
-async function getGalleryData(galleryId: string): Promise<Gallery | null> {
+async function getGalleryData(galleryId: string, baseUrl?: string): Promise<Gallery | null> {
   // For demo purposes, return demo gallery data
   if (galleryId === "demo") {
     return {
@@ -84,8 +85,8 @@ async function getGalleryData(galleryId: string): Promise<Gallery | null> {
 
   try {
     // Fetch gallery from API
-    const baseUrl = "http://localhost:3000";
-    const response = await fetch(`${baseUrl}/api/galleries/${galleryId}`, {
+    const apiBaseUrl = baseUrl || process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    const response = await fetch(`${apiBaseUrl}/api/galleries/${galleryId}`, {
       cache: "no-store", // Always fetch fresh data
     });
 
@@ -102,7 +103,7 @@ async function getGalleryData(galleryId: string): Promise<Gallery | null> {
     // Fetch images from subcollection
     if (gallery.imageIds && gallery.imageIds.length > 0) {
       const imagesResponse = await fetch(
-        `${baseUrl}/api/galleries/${galleryId}/images`,
+        `${apiBaseUrl}/api/galleries/${galleryId}/images`,
         {
           cache: "no-store",
         }
@@ -137,8 +138,14 @@ async function getGalleryData(galleryId: string): Promise<Gallery | null> {
 export default async function GalleryPage({ params }: GalleryPageProps) {
   const { id } = await params;
 
+  // Get the request URL from headers for proper base URL detection
+  const headersList = await headers();
+  const host = headersList.get('host') || 'localhost:3000';
+  const protocol = headersList.get('x-forwarded-proto') || 'http';
+  const baseUrl = `${protocol}://${host}`;
+
   // Get gallery data from Firestore
-  const galleryData = await getGalleryData(id);
+  const galleryData = await getGalleryData(id, baseUrl);
 
   if (!galleryData) {
     notFound();
@@ -204,7 +211,14 @@ export default async function GalleryPage({ params }: GalleryPageProps) {
 
 export async function generateMetadata({ params }: GalleryPageProps) {
   const { id } = await params;
-  const galleryData = await getGalleryData(id);
+  
+  // Get the request URL from headers for proper base URL detection
+  const headersList = await headers();
+  const host = headersList.get('host') || 'localhost:3000';
+  const protocol = headersList.get('x-forwarded-proto') || 'http';
+  const baseUrl = `${protocol}://${host}`;
+  
+  const galleryData = await getGalleryData(id, baseUrl);
 
   return {
     title: galleryData
