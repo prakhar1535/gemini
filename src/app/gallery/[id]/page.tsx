@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import ThreeGallery from "@/lib/three-gallery/ThreeGallery";
 import { defaultPaintingData } from "@/lib/three-gallery/paintingData";
 import { Gallery } from "@/lib/types/gallery";
+import { GalleryPageClient } from "./gallery-page-client";
 
 interface GalleryPageProps {
   params: {
@@ -155,62 +156,7 @@ export default async function GalleryPage({ params }: GalleryPageProps) {
     notFound();
   }
 
-  return (
-    <div className="min-h-screen bg-black">
-      {/* Header */}
-      <div className="absolute top-0 left-0 right-0 z-10 bg-black/50 backdrop-blur-sm">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-white">
-                {galleryData.name}
-              </h1>
-              <p className="text-gray-300">
-                {galleryData.description || "3D Art Gallery"}
-              </p>
-              <div className="flex items-center space-x-4 mt-2">
-                <span className="text-sm text-gray-400">
-                  {galleryData.images.length} artwork
-                  {galleryData.images.length !== 1 ? "s" : ""}
-                </span>
-                <span className="text-sm text-gray-400">
-                  {galleryData.metadata.viewCount} view
-                  {galleryData.metadata.viewCount !== 1 ? "s" : ""}
-                </span>
-                {galleryData.metadata.tags.length > 0 && (
-                  <div className="flex space-x-1">
-                    {galleryData.metadata.tags.slice(0, 3).map((tag) => (
-                      <span
-                        key={tag}
-                        className="px-2 py-1 bg-white/10 text-white text-xs rounded"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Link
-                href="/"
-                className="px-4 py-2 bg-white/20 text-white rounded-lg hover:bg-white/30 transition-colors"
-              >
-                Back to Home
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* 3D Gallery */}
-      <ThreeGallery
-        paintingData={galleryData.paintingData}
-        galleryId={id}
-        settings={galleryData.settings}
-      />
-    </div>
-  );
+  return <GalleryPageClient galleryData={galleryData} galleryId={id} />;
 }
 
 export async function generateMetadata({ params }: GalleryPageProps) {

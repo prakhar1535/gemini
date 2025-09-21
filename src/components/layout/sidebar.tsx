@@ -20,72 +20,74 @@ import {
   Package,
   UserCheck,
   LogOut,
+  Link2,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/lib/auth";
+import { useLanguage } from "@/lib/language-context";
 
 const navigation = [
   {
-    name: "Dashboard",
+    nameKey: "nav.dashboard",
     href: "/",
     icon: Home,
   },
   {
-    name: "Marketplace",
+    nameKey: "nav.marketplace",
     href: "/marketplace",
     icon: Store,
   },
   {
-    name: "Create Content",
+    nameKey: "nav.create_content",
     href: "/create",
     icon: PenTool,
   },
   {
-    name: "Content Studio",
+    nameKey: "nav.content_studio",
     href: "/content-studio",
     icon: Camera,
   },
   {
-    name: "Schedule Posts",
+    nameKey: "nav.schedule",
     href: "/schedule",
     icon: Calendar,
   },
   {
-    name: "Analytics",
+    nameKey: "nav.analytics",
     href: "/analytics",
     icon: BarChart3,
   },
   {
-    name: "3D Gallery",
+    nameKey: "nav.gallery",
     href: "/create-gallery",
     icon: Images,
   },
   {
-    name: "Settings",
+    nameKey: "nav.integrations",
+    href: "/integrations",
+    icon: Link2,
+  },
+  {
+    nameKey: "nav.settings",
     href: "/settings",
     icon: Settings,
   },
 ];
 
 const marketplaceNavigation = [
-  // {
-  //   name: "Browse Products",
-  //   href: "/marketplace",
-  //   icon: Store,
-  // },
   {
-    name: "Shopping Cart",
+    nameKey: "nav.cart",
     href: "/cart",
     icon: ShoppingCart,
   },
   {
-    name: "My Orders",
+    nameKey: "nav.orders",
     href: "/orders",
     icon: Package,
   },
   {
-    name: "Admin Dashboard",
+    nameKey: "nav.admin",
     href: "/admin",
     icon: UserCheck,
   },
@@ -117,6 +119,7 @@ const tools = [
 export function Sidebar() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
+  const { t } = useLanguage();
 
   return (
     <div className="flex h-full w-64 flex-col bg-card border-r border-border">
@@ -139,7 +142,7 @@ export function Sidebar() {
             const isActive = pathname === item.href;
             return (
               <Button
-                key={item.name}
+                key={item.nameKey}
                 variant={isActive ? "secondary" : "ghost"}
                 className={cn(
                   "w-full justify-start",
@@ -149,7 +152,7 @@ export function Sidebar() {
               >
                 <Link href={item.href}>
                   <item.icon className="mr-3 h-4 w-4" />
-                  {item.name}
+                  {t(item.nameKey)}
                 </Link>
               </Button>
             );
@@ -160,13 +163,13 @@ export function Sidebar() {
 
         <div className="space-y-1">
           <h3 className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-            Marketplace
+            {t("nav.marketplace")}
           </h3>
           {marketplaceNavigation.map((item) => {
             const isActive = pathname === item.href;
             return (
               <Button
-                key={item.name}
+                key={item.nameKey}
                 variant={isActive ? "secondary" : "ghost"}
                 className={cn(
                   "w-full justify-start",
@@ -176,7 +179,7 @@ export function Sidebar() {
               >
                 <Link href={item.href}>
                   <item.icon className="mr-3 h-4 w-4" />
-                  {item.name}
+                  {t(item.nameKey)}
                 </Link>
               </Button>
             );
@@ -231,7 +234,7 @@ export function Sidebar() {
             </p>
           </div>
         </div>
-        
+
         <Button
           variant="outline"
           size="sm"
@@ -239,7 +242,7 @@ export function Sidebar() {
           className="w-full justify-start"
         >
           <LogOut className="h-4 w-4 mr-2" />
-          Sign Out
+          {t("common.sign_out") || "Sign Out"}
         </Button>
       </div>
     </div>

@@ -15,10 +15,13 @@ import { Bell, Search, Menu, Sun, Moon, ShoppingCart } from "lucide-react";
 import { useState } from "react";
 import Link from "next/link";
 import { useCart } from "@/lib/cart";
+import { LanguageToggle } from "@/components/language-toggle";
+import { useLanguage } from "@/lib/language-context";
 
 export function Header() {
   const [isDark, setIsDark] = useState(false);
   const { getCartItemsCount } = useCart();
+  const { t } = useLanguage();
 
   const toggleTheme = () => {
     setIsDark(!isDark);
@@ -36,7 +39,9 @@ export function Header() {
         <div className="relative hidden md:block">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Search content, posts, or analytics..."
+            placeholder={
+              t("common.search") || "Search content, posts, or analytics..."
+            }
             className="w-80 pl-10"
           />
         </div>
@@ -44,6 +49,9 @@ export function Header() {
 
       {/* Right side */}
       <div className="flex items-center space-x-4">
+        {/* Language toggle */}
+        <LanguageToggle />
+
         {/* Theme toggle */}
         <Button
           variant="ghost"
@@ -106,4 +114,3 @@ export function Header() {
     </header>
   );
 }
-

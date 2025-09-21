@@ -16,6 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Upload, X, Eye, Link as LinkIcon } from "lucide-react";
 import { toast } from "sonner";
+import { useLanguage } from "@/lib/language-context";
 
 interface UploadedImage {
   id: string;
@@ -30,6 +31,7 @@ export default function CreateGalleryPage() {
   const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [galleryId, setGalleryId] = useState<string | null>(null);
+  const { t } = useLanguage();
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
@@ -201,15 +203,16 @@ export default function CreateGalleryPage() {
     <MainLayout>
       <div className="max-w-4xl mx-auto space-y-6">
         <div>
-          <h1 className="text-3xl font-bold">Create 3D Art Gallery</h1>
+          <h1 className="text-3xl font-bold">{t("create.title")}</h1>
           <p className="text-muted-foreground mt-2">
-            Upload your images and create an immersive 3D gallery experience
+            {t("create.subtitle") ||
+              "Upload your images and create an immersive 3D gallery experience"}
           </p>
           <div className="mt-4">
             <Button variant="outline" asChild>
               <a href="/gallery/demo" target="_blank" rel="noopener noreferrer">
                 <Eye className="w-4 h-4 mr-2" />
-                View Demo Gallery
+                {t("create.view_demo") || "View Demo Gallery"}
               </a>
             </Button>
           </div>
@@ -219,31 +222,38 @@ export default function CreateGalleryPage() {
           {/* Gallery Settings */}
           <Card>
             <CardHeader>
-              <CardTitle>Gallery Settings</CardTitle>
+              <CardTitle>
+                {t("create.settings") || "Gallery Settings"}
+              </CardTitle>
               <CardDescription>
-                Configure your gallery name and description
+                {t("create.settings_desc") ||
+                  "Configure your gallery name and description"}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label htmlFor="gallery-name">Gallery Name</Label>
+                <Label htmlFor="gallery-name">{t("create.name")}</Label>
                 <Input
                   id="gallery-name"
                   value={galleryName}
                   onChange={(e) => setGalleryName(e.target.value)}
-                  placeholder="My Art Gallery"
+                  placeholder={t("create.name_placeholder") || "My Art Gallery"}
                 />
               </div>
 
               <div>
                 <Label htmlFor="gallery-description">
-                  Description (Optional)
+                  {t("create.description")} (
+                  {t("common.optional") || "Optional"})
                 </Label>
                 <Textarea
                   id="gallery-description"
                   value={galleryDescription}
                   onChange={(e) => setGalleryDescription(e.target.value)}
-                  placeholder="Describe your gallery..."
+                  placeholder={
+                    t("create.description_placeholder") ||
+                    "Describe your gallery..."
+                  }
                   rows={3}
                 />
               </div>

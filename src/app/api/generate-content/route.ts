@@ -117,7 +117,70 @@ Please respond in the following JSON format:
       const isHindiQuery = topic && isHindi(topic);
       const responseLanguage = isHindiQuery ? "Hindi (हिंदी)" : "English";
 
-      const prompt = `
+      const isMultiPlatform = platform === "multi";
+
+      const prompt = isMultiPlatform
+        ? `
+Generate engaging social media content for ALL platforms (Instagram, X/Twitter, LinkedIn) with the following specifications:
+
+IMPORTANT: Respond in ${responseLanguage}. If the user's topic is in Hindi, respond in Hindi. If in English, respond in English.
+
+Topic: ${topic}
+Tone: ${tone}
+Length: ${length}
+${
+  imageDescription
+    ? `Image Description: ${imageDescription} - Make sure the content relates to and complements this image description.`
+    : ""
+}
+
+Platform Guidelines:
+- Instagram: Visual storytelling, lifestyle content, engaging captions. Use emojis and relevant hashtags. More personal and creative.
+- X/Twitter: Keep it concise, engaging, and conversational. Use relevant hashtags and mentions when appropriate. Under 280 characters.
+- LinkedIn: Professional tone, industry insights, thought leadership. Focus on business value and networking. More formal and informative.
+
+Requirements:
+- Create compelling, engaging content that resonates with the target audience
+- Use appropriate tone and style for each platform
+- ${
+            includeHashtags
+              ? "Include 3-5 relevant hashtags for each platform"
+              : "No hashtags needed"
+          }
+- ${
+            includeCallToAction
+              ? "Include a clear call-to-action for each platform"
+              : "No call-to-action needed"
+          }
+- Make it shareable and engaging
+- Consider trending topics and current events if relevant
+- RESPOND IN ${responseLanguage.toUpperCase()}
+${
+  imageDescription
+    ? "- Ensure the content works well with the described image"
+    : ""
+}
+
+Please respond in the following JSON format:
+{
+  "Instagram": {
+    "content": "Instagram-specific content here",
+    "hashtags": ["#hashtag1", "#hashtag2", "#hashtag3"],
+    "callToAction": "Instagram call-to-action here"
+  },
+  "X/Twitter": {
+    "content": "Twitter-specific content here",
+    "hashtags": ["#hashtag1", "#hashtag2"],
+    "callToAction": "Twitter call-to-action here"
+  },
+  "LinkedIn": {
+    "content": "LinkedIn-specific content here",
+    "hashtags": ["#hashtag1", "#hashtag2", "#hashtag3"],
+    "callToAction": "LinkedIn call-to-action here"
+  }
+}
+`
+        : `
 Generate engaging social media content for ${platform.toUpperCase()} with the following specifications:
 
 IMPORTANT: Respond in ${responseLanguage}. If the user's topic is in Hindi, respond in Hindi. If in English, respond in English.
@@ -141,10 +204,10 @@ Requirements:
 - Use appropriate tone and style for the platform
 - ${includeHashtags ? "Include 3-5 relevant hashtags" : "No hashtags needed"}
 - ${
-        includeCallToAction
-          ? "Include a clear call-to-action"
-          : "No call-to-action needed"
-      }
+            includeCallToAction
+              ? "Include a clear call-to-action"
+              : "No call-to-action needed"
+          }
 - Make it shareable and engaging
 - Consider trending topics and current events if relevant
 - RESPOND IN ${responseLanguage.toUpperCase()}
@@ -170,7 +233,9 @@ Please respond in the following JSON format:
       // Try to parse JSON response first
       try {
         // Remove markdown code blocks if present
-        let cleanText = text.replace(/```json\n?/g, "").replace(/```\n?/g, "");
+        const cleanText = text
+          .replace(/```json\n?/g, "")
+          .replace(/```\n?/g, "");
 
         const jsonMatch = cleanText.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
