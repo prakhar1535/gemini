@@ -21,3 +21,4 @@ export function LanguageToggle() {
     </Button>
   );
 }
+
