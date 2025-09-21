@@ -12,7 +12,10 @@ interface GalleryPageProps {
 }
 
 // Function to get gallery data from Firestore
-async function getGalleryData(galleryId: string, baseUrl?: string): Promise<Gallery | null> {
+async function getGalleryData(
+  galleryId: string,
+  baseUrl?: string
+): Promise<Gallery | null> {
   // For demo purposes, return demo gallery data
   if (galleryId === "demo") {
     return {
@@ -85,7 +88,8 @@ async function getGalleryData(galleryId: string, baseUrl?: string): Promise<Gall
 
   try {
     // Fetch gallery from API
-    const apiBaseUrl = baseUrl || process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    const apiBaseUrl =
+      baseUrl || process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
     const response = await fetch(`${apiBaseUrl}/api/galleries/${galleryId}`, {
       cache: "no-store", // Always fetch fresh data
     });
@@ -140,8 +144,8 @@ export default async function GalleryPage({ params }: GalleryPageProps) {
 
   // Get the request URL from headers for proper base URL detection
   const headersList = await headers();
-  const host = headersList.get('host') || 'localhost:3000';
-  const protocol = headersList.get('x-forwarded-proto') || 'http';
+  const host = headersList.get("host") || "localhost:3000";
+  const protocol = headersList.get("x-forwarded-proto") || "http";
   const baseUrl = `${protocol}://${host}`;
 
   // Get gallery data from Firestore
@@ -211,13 +215,13 @@ export default async function GalleryPage({ params }: GalleryPageProps) {
 
 export async function generateMetadata({ params }: GalleryPageProps) {
   const { id } = await params;
-  
+
   // Get the request URL from headers for proper base URL detection
   const headersList = await headers();
-  const host = headersList.get('host') || 'localhost:3000';
-  const protocol = headersList.get('x-forwarded-proto') || 'http';
+  const host = headersList.get("host") || "localhost:3000";
+  const protocol = headersList.get("x-forwarded-proto") || "http";
   const baseUrl = `${protocol}://${host}`;
-  
+
   const galleryData = await getGalleryData(id, baseUrl);
 
   return {
