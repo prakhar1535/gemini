@@ -1,3 +1,6 @@
+import fs from "fs";
+import path from "path";
+
 interface OpenRouterMessage {
   role: "user" | "assistant" | "system";
   content: Array<{
@@ -18,7 +21,14 @@ interface OpenRouterResponse {
     index: number;
     message: {
       role: string;
-      content: string;
+      content?: string;
+      // Some models return images along with content
+      images?: Array<{
+        type?: string;
+        // OpenRouter typically uses { image_url: { url: string } },
+        // but some providers may inline base64 or use different keys
+        image_url?: any;
+      }>;
     };
     finish_reason: string;
   }>;
@@ -40,10 +50,29 @@ export class OpenRouterService {
     }
   }
 
+  private logToFile(filename: string, data: any) {
+    try {
+      const logDir = path.join(process.cwd(), 'logs');
+      if (!fs.existsSync(logDir)) {
+        fs.mkdirSync(logDir, { recursive: true });
+      }
+      const logPath = path.join(logDir, filename);
+      const timestamp = new Date().toISOString();
+      const logEntry = `\n\n=== ${timestamp} ===\n${JSON.stringify(data, null, 2)}\n`;
+      fs.appendFileSync(logPath, logEntry);
+      console.log(`Logged to ${logPath}`);
+    } catch (error) {
+      console.error('Failed to log to file:', error);
+    }
+  }
+
   async generateImageVariations(imageUrl: string, style: string, prompt?: string): Promise<string[]> {
     if (!this.apiKey) {
+      console.log("OpenRouter API key not found in service");
       throw new Error("OpenRouter API key not configured");
     }
+    
+    console.log("OpenRouter API key found, making request...");
 
     try {
       const basePrompt = prompt || `Generate ${style} style variations of this image for social media`;
@@ -54,7 +83,8 @@ export class OpenRouterService {
         `${basePrompt} - Minimalist style with clean lines, soft lighting, modern aesthetic, premium quality`
       ];
 
-      const promises = enhancedPrompts.map(async (enhancedPrompt) => {
+      type MappedResult = { content: string; images: any[] };
+      const promises: Array<Promise<MappedResult>> = enhancedPrompts.map(async (enhancedPrompt) => {
         const response = await fetch(`${this.baseUrl}/chat/completions`, {
           method: "POST",
           headers: {
@@ -71,7 +101,7 @@ export class OpenRouterService {
                 content: [
                   {
                     type: "text",
-                    text: `Generate 4 different enhanced variations of this image for social media content. Focus on: ${enhancedPrompt}. Create professional-quality variations with different lighting, composition, and styling. Return the variations as image URLs or provide detailed descriptions of how each variation should look.`
+                    text: `Generate 4 different enhanced variations of this image for social media content. Focus on: ${enhancedPrompt}. Create professional-quality variations with different lighting, composition, and styling. Return the variations as base64 encoded images in data:image/jpeg;base64, format.`
                   },
                   {
                     type: "image_url",
@@ -87,36 +117,110 @@ export class OpenRouterService {
         });
 
         if (!response.ok) {
-          throw new Error(`OpenRouter API error: ${response.status}`);
+          const errorText = await response.text();
+          console.log(`OpenRouter API Error ${response.status}:`, errorText);
+          
+          // Log error to file
+          this.logToFile('openrouter-error.json', {
+            status: response.status,
+            errorText: errorText,
+            prompt: enhancedPrompt,
+            imageUrl: imageUrl,
+            model: "google/gemini-2.5-flash-image-preview"
+          });
+          
+          throw new Error(`OpenRouter API error: ${response.status} - ${errorText}`);
         }
 
         const data: OpenRouterResponse = await response.json();
-        const content = data.choices[0]?.message?.content || "";
+        const message = (data.choices?.[0]?.message || {}) as any;
+        const content: string = message?.content || "";
+        const images: any[] = Array.isArray(message?.images) ? message.images : [];
+        
+        // Log complete response to file
+        this.logToFile('openrouter-response.json', {
+          prompt: enhancedPrompt,
+          fullResponse: data,
+          content: content,
+          contentLength: content.length,
+          containsBase64: content.includes('base64'),
+          containsDataImage: content.includes('data:image'),
+          imagesCount: images.length,
+          model: "google/gemini-2.5-flash-image-preview"
+        });
+        
         console.log(`OpenRouter API Response for ${enhancedPrompt}:`, content);
-        return content;
+        console.log(`Response length: ${content.length} characters`);
+        console.log(`Contains base64: ${content.includes('base64')}`);
+        console.log(`Contains data:image: ${content.includes('data:image')}`);
+        return { content, images };
       });
 
       const results = await Promise.all(promises);
       
-      // Extract image URLs from the API responses
-      // The API might return URLs or image references in the text
+      // Extract images from the API responses
+      // Prefer message.images[]; fallback to parsing content text
       const variations: string[] = [];
       
-      results.forEach((result) => {
-        // Try to extract URLs from the response text
+      results.forEach(({ content, images }) => {
+        // Helper to normalize any image_url shape
+        const normalizeUrl = (val: any): string | null => {
+          if (!val) return null;
+          if (typeof val === 'string') return val;
+          if (typeof val === 'object') {
+            const candidate = val.url || val.base64 || val.data || val.src || null;
+            return typeof candidate === 'string' ? candidate : null;
+          }
+          return null;
+        };
+
+        // 1) Prefer explicit images array
+        if (Array.isArray(images) && images.length > 0) {
+          for (const img of images) {
+            const urlCandidate = normalizeUrl(img?.image_url ?? img);
+            if (typeof urlCandidate === 'string') {
+              if (urlCandidate.startsWith('data:image')) {
+                variations.push(urlCandidate);
+                continue;
+              }
+              if (/^https?:\/\/[^\s"'<>]+\.(jpg|jpeg|png|gif|webp|svg)$/i.test(urlCandidate)) {
+                variations.push(urlCandidate);
+                continue;
+              }
+              if (/^[A-Za-z0-9+/]{100,}={0,2}$/.test(urlCandidate)) {
+                variations.push(`data:image/jpeg;base64,${urlCandidate}`);
+                continue;
+              }
+            }
+          }
+        }
+
+        // 2) Fallback: parse from content text
+        const base64Regex = /data:image\/(jpeg|jpg|png|gif|webp);base64,([A-Za-z0-9+/=]+)/g;
+        const base64Matches = content.match(base64Regex);
+        if (base64Matches && base64Matches.length > 0) {
+          variations.push(...base64Matches);
+          return;
+        }
         const urlRegex = /https?:\/\/[^\s"'<>]+\.(jpg|jpeg|png|gif|webp|svg)/gi;
-        const urls = result.match(urlRegex);
-        
+        const urls = content.match(urlRegex);
         if (urls && urls.length > 0) {
           variations.push(...urls);
-        } else {
-          // If no URLs found, the API might return image references or base64 data
-          // For now, return the original image with enhancement markers
-          variations.push(`${imageUrl}?enhanced=${Date.now()}&style=${style}`);
+          return;
+        }
+        const rawBase64Regex = /[A-Za-z0-9+/]{100,}={0,2}/g;
+        const rawBase64Matches = content.match(rawBase64Regex);
+        if (rawBase64Matches && rawBase64Matches.length > 0) {
+          rawBase64Matches.forEach(match => {
+            if (match.length > 100) {
+              variations.push(`data:image/jpeg;base64,${match}`);
+            }
+          });
         }
       });
       
       // If we got variations from the API, return them
+      console.log(`Extracted ${variations.length} variations:`, variations.slice(0, 2)); // Log first 2 for debugging
       if (variations.length > 0) {
         return variations.slice(0, 4); // Return up to 4 variations
       }
@@ -131,6 +235,17 @@ export class OpenRouterService {
 
     } catch (error) {
       console.error("Error generating image variations:", error);
+      
+      // Log error to file
+      this.logToFile('openrouter-catch-error.json', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        imageUrl: imageUrl,
+        style: style,
+        prompt: prompt,
+        model: "google/gemini-2.5-flash-image-preview"
+      });
+      
       throw new Error("Failed to generate image variations");
     }
   }
@@ -150,7 +265,7 @@ export class OpenRouterService {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          model: "google/gemini-2.0-flash-exp",
+          model: "google/gemini-2.5-flash-image-preview",
           messages: [
             {
               role: "user",
@@ -208,7 +323,7 @@ export class OpenRouterService {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          model: "google/gemini-2.0-flash-exp",
+          model: "google/gemini-2.5-flash-image-preview",
           messages: [
             {
               role: "user",
