@@ -14,13 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import {
-  AlertCircle,
-  Eye,
-  EyeOff,
-  Store,
-  Zap,
-} from "lucide-react";
+import { AlertCircle, Eye, EyeOff, Store, Zap } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 
@@ -87,47 +81,14 @@ export default function LoginPage() {
               </div>
               <span className="text-2xl font-bold">SocialFlow</span>
             </div>
-            <h1 className="text-3xl font-bold mb-2">Welcome to the Marketplace</h1>
+            <h1 className="text-3xl font-bold mb-2">
+              Welcome to the Marketplace
+            </h1>
             <p className="text-muted-foreground">
-              Experience our comprehensive e-commerce platform with AI-powered content generation and 3D galleries.
+              Experience our comprehensive e-commerce platform with AI-powered
+              content generation and 3D galleries.
             </p>
           </div>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Store className="h-5 w-5" />
-                <span>Demo Accounts</span>
-              </CardTitle>
-              <CardDescription>
-                Try different user roles to explore all features
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {demoAccounts.map((account, index) => (
-                <div key={index} className="border rounded-lg p-4 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Badge className={account.color}>{account.role}</Badge>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setEmail(account.email);
-                        setPassword(account.password);
-                      }}
-                    >
-                      Use This Account
-                    </Button>
-                  </div>
-                  <p className="text-sm text-muted-foreground">{account.description}</p>
-                  <div className="text-xs font-mono bg-gray-100 p-2 rounded">
-                    <div>Email: {account.email}</div>
-                    <div>Password: {account.password}</div>
-                  </div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
 
           <Card>
             <CardHeader>
@@ -187,7 +148,7 @@ export default function LoginPage() {
                     required
                   />
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label htmlFor="password">Password</Label>
                   <div className="relative">
@@ -215,11 +176,7 @@ export default function LoginPage() {
                   </div>
                 </div>
 
-                <Button
-                  type="submit"
-                  className="w-full"
-                  disabled={isLoading}
-                >
+                <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? "Signing In..." : "Sign In"}
                 </Button>
               </form>
@@ -267,7 +224,10 @@ export default function LoginPage() {
                   <AlertCircle className="h-4 w-4 text-blue-600 mt-0.5" />
                   <div className="text-sm text-blue-800">
                     <p className="font-medium">Demo Mode</p>
-                    <p>Use any of the demo accounts above to explore different user roles and features.</p>
+                    <p>
+                      Use any of the demo accounts above to explore different
+                      user roles and features.
+                    </p>
                   </div>
                 </div>
               </div>
