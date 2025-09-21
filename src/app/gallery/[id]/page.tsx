@@ -3,8 +3,11 @@ import Link from "next/link";
 import { headers } from "next/headers";
 import ThreeGallery from "@/lib/three-gallery/ThreeGallery";
 import { defaultPaintingData } from "@/lib/three-gallery/paintingData";
-import { Gallery } from "@/lib/types/gallery";
-import { GalleryPageClient } from "./gallery-page-client";
+import {
+  Gallery,
+  GalleryPaintingData,
+  GalleryImage,
+} from "@/lib/types/gallery";
 
 interface GalleryPageProps {
   params: {
@@ -69,6 +72,7 @@ async function getGalleryData(
       paintingData: defaultPaintingData.map((painting, index) => ({
         ...painting,
         imageId: `demo-${index + 1}`,
+        position: painting.position || { x: 0, y: 2, z: -19.5 }, // Ensure position is always defined
       })),
       settings: {
         backgroundColor: "#000000",
@@ -120,15 +124,17 @@ async function getGalleryData(
 
         // Update paintingData with actual image sources
         if (gallery.paintingData && gallery.images) {
-          gallery.paintingData = gallery.paintingData.map((painting, index) => {
-            const image = gallery.images.find(
-              (img) => img.id === painting.imageId
-            );
-            return {
-              ...painting,
-              imgSrc: image ? image.base64 : painting.imgSrc,
-            };
-          });
+          gallery.paintingData = gallery.paintingData.map(
+            (painting: GalleryPaintingData) => {
+              const image = gallery.images?.find(
+                (img: GalleryImage) => img.id === painting.imageId
+              );
+              return {
+                ...painting,
+                imgSrc: image ? image.base64 : painting.imgSrc,
+              };
+            }
+          );
         }
       }
     }
@@ -156,7 +162,62 @@ export default async function GalleryPage({ params }: GalleryPageProps) {
     notFound();
   }
 
-  return <GalleryPageClient galleryData={galleryData} galleryId={id} />;
+  return (
+    <div className="min-h-screen bg-black">
+      {/* Header */}
+      <div className="absolute top-0 left-0 right-0 z-10 bg-black/50 backdrop-blur-sm">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-white">
+                {galleryData.name}
+              </h1>
+              <p className="text-gray-300">
+                {galleryData.description || "3D Art Gallery"}
+              </p>
+              <div className="flex items-center space-x-4 mt-2">
+                <span className="text-sm text-gray-400">
+                  {galleryData.images?.length || 0} artwork
+                  {(galleryData.images?.length || 0) !== 1 ? "s" : ""}
+                </span>
+                <span className="text-sm text-gray-400">
+                  {galleryData.metadata.viewCount} view
+                  {galleryData.metadata.viewCount !== 1 ? "s" : ""}
+                </span>
+                {galleryData.metadata.tags.length > 0 && (
+                  <div className="flex space-x-1">
+                    {galleryData.metadata.tags.slice(0, 3).map((tag) => (
+                      <span
+                        key={tag}
+                        className="px-2 py-1 bg-white/10 text-white text-xs rounded"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="flex items-center space-x-4">
+              <Link
+                href="/"
+                className="px-4 py-2 bg-white/20 text-white rounded-lg hover:bg-white/30 transition-colors"
+              >
+                Back to Home
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 3D Gallery */}
+      <ThreeGallery
+        paintingData={galleryData.paintingData}
+        galleryId={id}
+        settings={galleryData.settings}
+      />
+    </div>
+  );
 }
 
 export async function generateMetadata({ params }: GalleryPageProps) {

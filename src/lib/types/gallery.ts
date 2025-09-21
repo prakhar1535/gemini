@@ -11,6 +11,16 @@ export interface GalleryImage {
   order: number; // For positioning in gallery
 }
 
+export interface GalleryPaintingData {
+  imageId: string; // Required for gallery paintings
+  imgSrc?: string; // Optional image source for display
+  width: number;
+  height: number;
+  position: { x: number; y: number; z: number };
+  rotationY: number;
+  info: GalleryInfo;
+}
+
 export interface GalleryInfo {
   title: string;
   artist: string;
@@ -24,14 +34,8 @@ export interface Gallery {
   name: string;
   description: string;
   imageIds: string[]; // Array of image IDs (stored in subcollection)
-  paintingData: {
-    imageId: string; // Reference to image in subcollection
-    width: number;
-    height: number;
-    position: { x: number; y: number; z: number };
-    rotationY: number;
-    info: GalleryInfo;
-  }[];
+  images?: GalleryImage[]; // Optional array of actual image data
+  paintingData: GalleryPaintingData[];
   settings: {
     backgroundColor?: string;
     lightingIntensity?: number;

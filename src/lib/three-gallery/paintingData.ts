@@ -16,6 +16,16 @@ export interface PaintingData {
   info: PaintingInfo;
 }
 
+// Gallery-specific painting data with required imageId
+export interface GalleryPaintingData {
+  imageId: string; // Required for gallery paintings
+  width: number;
+  height: number;
+  position: { x: number; y: number; z: number };
+  rotationY: number;
+  info: PaintingInfo;
+}
+
 // Default gallery with sample artworks
 export const defaultPaintingData: PaintingData[] = [
   // Front Wall
@@ -114,9 +124,8 @@ function calculatePaintingDimensions(baseWidth: number = 4): {
 
 // Function to generate painting data from user images (image IDs)
 export function generatePaintingDataFromImages(
-  imageIds: string[], // Array of image IDs
-  galleryId: string
-): PaintingData[] {
+  imageIds: string[] // Array of image IDs
+): GalleryPaintingData[] {
   const positions = [
     // Front Wall
     ...Array.from({ length: 4 }, (_, i) => ({
@@ -153,7 +162,7 @@ export function generatePaintingDataFromImages(
     const dimensions = calculatePaintingDimensions(4); // Base width of 4 units
 
     return {
-      imageId: imageId, // Store image ID reference
+      imageId: imageId || `image-${index}`, // Store image ID reference, fallback if undefined
       width: dimensions.width,
       height: dimensions.height,
       position,
@@ -163,6 +172,7 @@ export function generatePaintingDataFromImages(
         artist: "User Gallery",
         description: `A beautiful piece from your personal gallery collection.`,
         year: new Date().getFullYear().toString(),
+        link: "", // Empty link for user galleries
       },
     };
   });
