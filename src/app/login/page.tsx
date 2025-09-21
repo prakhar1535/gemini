@@ -64,7 +64,7 @@ export default function LoginPage() {
       role: "Customer",
       email: "customer@example.com",
       password: "customer123",
-      description: "Browse marketplace and make purchases",
+      description: "Browse marketplace and make purchase",
       color: "bg-green-100 text-green-800",
     },
   ];

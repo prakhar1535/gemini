@@ -79,36 +79,42 @@ export default function CreateGalleryPage() {
     setIsUploading(true);
 
     try {
-      // Generate a unique gallery ID
-      const newGalleryId = Math.random().toString(36).substr(2, 9);
-
-      // Create FormData for image upload
+      // Create FormData for gallery creation
       const formData = new FormData();
-      formData.append("galleryId", newGalleryId);
+      formData.append("name", galleryName);
+      formData.append("description", galleryDescription);
+      formData.append("isPublic", "true"); // Default to public
+      formData.append("createdBy", "anonymous"); // You can implement user authentication later
+      formData.append("tags", JSON.stringify(["user-gallery"]));
 
       // Add all uploaded images
       uploadedImages.forEach((image) => {
         formData.append("images", image.file);
       });
 
-      // Upload images to server
-      const response = await fetch("/api/upload-gallery-images", {
+      // Create gallery using the new API
+      const response = await fetch("/api/galleries", {
         method: "POST",
         body: formData,
       });
 
       if (!response.ok) {
-        throw new Error("Failed to upload images");
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to create gallery");
       }
 
       const result = await response.json();
-      console.log("Upload result:", result);
+      console.log("Gallery creation result:", result);
 
-      setGalleryId(newGalleryId);
+      setGalleryId(result.gallery.id);
       toast.success("Gallery created successfully!");
     } catch (error) {
       console.error("Error creating gallery:", error);
-      toast.error("Failed to create gallery. Please try again.");
+      toast.error(
+        `Failed to create gallery: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
     } finally {
       setIsUploading(false);
     }

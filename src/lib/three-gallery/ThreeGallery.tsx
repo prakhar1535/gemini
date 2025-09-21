@@ -8,12 +8,21 @@ import { PaintingData } from "./paintingData";
 interface ThreeGalleryProps {
   paintingData: PaintingData[];
   galleryId: string;
+  settings?: {
+    backgroundColor?: string;
+    lightingIntensity?: number;
+    showAudioGuide?: boolean;
+    showInfoPanels?: boolean;
+  };
 }
 
 export default function ThreeGallery({
   paintingData,
   galleryId,
+  settings,
 }: ThreeGalleryProps) {
+  // For now, we'll use the existing paintingData structure
+  // In the future, we can enhance this to fetch images from subcollections
   const mountRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);

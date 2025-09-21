@@ -1,0 +1,27 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Galleries collection
+    match /galleries/{galleryId} {
+      allow read: if true; // Public read for now
+      allow write: if true; // Allow write for now (you can add auth later)
+    }
+    
+    // Gallery images collection
+    match /galleryImages/{imageId} {
+      allow read: if true; // Public read
+      allow write: if true; // Allow write for now (you can add auth later)
+    }
+    
+    // Telegram photos collection (existing)
+    match /telegramPhotos/{photoId} {
+      allow read: if true;
+      allow write: if true;
+    }
+    
+    // Users collection (for future use)
+    match /users/{userId} {
+      allow read, write: if true; // Allow for now (you can add auth later)
+    }
+  }
+}

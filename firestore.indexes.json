@@ -1,0 +1,33 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "galleries",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "metadata.isPublic",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "metadata.createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "galleries",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "metadata.createdBy",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "metadata.createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

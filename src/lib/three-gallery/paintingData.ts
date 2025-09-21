@@ -7,10 +7,11 @@ export interface PaintingInfo {
 }
 
 export interface PaintingData {
-  imgSrc: string;
+  imgSrc?: string; // For demo/legacy support
+  imageId?: string; // For new subcollection-based galleries
   width: number;
   height: number;
-  position: { x: number; y: number; z: number };
+  position?: { x: number; y: number; z: number };
   rotationY: number;
   info: PaintingInfo;
 }
@@ -111,9 +112,9 @@ function calculatePaintingDimensions(baseWidth: number = 4): {
   };
 }
 
-// Function to generate painting data from user images
+// Function to generate painting data from user images (image IDs)
 export function generatePaintingDataFromImages(
-  images: string[],
+  imageIds: string[], // Array of image IDs
   galleryId: string
 ): PaintingData[] {
   const positions = [
@@ -147,12 +148,12 @@ export function generatePaintingDataFromImages(
     })),
   ];
 
-  return images.map((imageSrc, index) => {
+  return imageIds.map((imageId, index) => {
     const position = positions[index % positions.length];
     const dimensions = calculatePaintingDimensions(4); // Base width of 4 units
 
     return {
-      imgSrc: `/gallery-assets/user-galleries/${galleryId}/${imageSrc}`,
+      imageId: imageId, // Store image ID reference
       width: dimensions.width,
       height: dimensions.height,
       position,
