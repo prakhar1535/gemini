@@ -5,6 +5,12 @@ const genAI = new GoogleGenerativeAI(
   process.env.NEXT_PUBLIC_GEMINI_API_KEY || ""
 );
 
+// Function to detect if text is in Hindi
+function isHindi(text: string): boolean {
+  const hindiRegex = /[\u0900-\u097F]/;
+  return hindiRegex.test(text);
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -25,8 +31,14 @@ export async function POST(request: NextRequest) {
     if (type === "image") {
       const { base64, platform, additionalPrompt } = requestData;
 
+      // Detect if the additional prompt is in Hindi
+      const isHindiQuery = additionalPrompt && isHindi(additionalPrompt);
+      const responseLanguage = isHindiQuery ? "Hindi (हिंदी)" : "English";
+
       const prompt = `
 You are an expert social media content creator. Analyze this image carefully and generate engaging content for ${platform.toUpperCase()}.
+
+IMPORTANT: Respond in ${responseLanguage}. If the user's query is in Hindi, respond in Hindi. If in English, respond in English.
 
 INSTRUCTIONS:
 1. First, describe what you see in the image in detail
@@ -47,6 +59,7 @@ CONTENT REQUIREMENTS:
 - Include relevant hashtags based on the image content
 - Add a compelling call-to-action
 - Make it engaging and shareable
+- RESPOND IN ${responseLanguage.toUpperCase()}
 
 Please respond in the following JSON format:
 {
@@ -100,8 +113,14 @@ Please respond in the following JSON format:
         imageDescription,
       } = requestData;
 
+      // Detect if the topic is in Hindi
+      const isHindiQuery = topic && isHindi(topic);
+      const responseLanguage = isHindiQuery ? "Hindi (हिंदी)" : "English";
+
       const prompt = `
 Generate engaging social media content for ${platform.toUpperCase()} with the following specifications:
+
+IMPORTANT: Respond in ${responseLanguage}. If the user's topic is in Hindi, respond in Hindi. If in English, respond in English.
 
 Topic: ${topic}
 Tone: ${tone}
@@ -128,6 +147,7 @@ Requirements:
       }
 - Make it shareable and engaging
 - Consider trending topics and current events if relevant
+- RESPOND IN ${responseLanguage.toUpperCase()}
 ${
   imageDescription
     ? "- Ensure the content works well with the described image"
@@ -150,17 +170,21 @@ Please respond in the following JSON format:
       // Try to parse JSON response first
       try {
         // Remove markdown code blocks if present
-        let cleanText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '');
-        
+        let cleanText = text.replace(/```json\n?/g, "").replace(/```\n?/g, "");
+
         const jsonMatch = cleanText.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
           const parsed = JSON.parse(jsonMatch[0]);
-          
+
           // Handle multi-platform response
-          if (parsed['X/Twitter'] || parsed['LinkedIn'] || parsed['Instagram']) {
+          if (
+            parsed["X/Twitter"] ||
+            parsed["LinkedIn"] ||
+            parsed["Instagram"]
+          ) {
             return NextResponse.json(parsed);
           }
-          
+
           // Handle single content response
           return NextResponse.json({
             content: parsed.content || cleanText,
@@ -189,4 +213,3 @@ Please respond in the following JSON format:
     );
   }
 }
-
